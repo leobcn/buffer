@@ -2,6 +2,8 @@ package buffer // import "github.com/tdewolff/buffer"
 
 import "io"
 
+var MinBuf = 4096
+
 // Shifter is a buffered reader that allows peeking forward and shifting, taking an io.Reader.
 type Shifter struct {
 	r   io.Reader
@@ -72,10 +74,10 @@ func (z *Shifter) Peek(i int) byte {
 		d := len(z.buf) - z.pos
 		var buf []byte
 		if 2*d > c {
-			if 2*c > MaxBuf {
-				z.err = ErrExceeded
-				return 0
-			}
+			// if 2*c > MaxBuf {
+			// 	z.err = ErrExceeded
+			// 	return 0
+			// }
 			buf = make([]byte, d, 2*c)
 		} else {
 			buf = z.buf[:d]
