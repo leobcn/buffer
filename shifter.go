@@ -59,7 +59,7 @@ func (z *Shifter) Pos() int {
 	return z.end - z.pos
 }
 
-// Peek returns the ith byte and possible does a reallocation
+// Peek returns the ith byte and possibly does an allocation.
 func (z *Shifter) Peek(i int) byte {
 	end := z.end + i
 	if end >= len(z.buf) {
@@ -82,7 +82,7 @@ func (z *Shifter) Peek(i int) byte {
 		}
 		copy(buf, z.buf[z.pos:])
 
-		// Read in to fill the buffer till capacity
+		// read in to fill the buffer till capacity
 		var n int
 		n, z.err = z.r.Read(buf[d:cap(buf)])
 		end -= z.pos
