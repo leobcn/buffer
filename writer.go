@@ -29,3 +29,8 @@ func (w *Writer) Write(b []byte) (int, error) {
 func (w *Writer) Bytes() []byte {
 	return w.buf
 }
+
+// Reset empties and reuses the current buffer.
+func (w *Writer) Reset() {
+	w.buf = w.buf[:0]
+}
