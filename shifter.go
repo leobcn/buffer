@@ -46,21 +46,6 @@ func (z *Shifter) IsEOF() bool {
 	return z.err == io.EOF
 }
 
-// Move advances the 0 position of read.
-func (z *Shifter) Move(n int) {
-	z.end += n
-}
-
-// MoveTo sets the 0 position of read.
-func (z *Shifter) MoveTo(n int) {
-	z.end = z.pos + n
-}
-
-// Pos returns the 0 position of read.
-func (z *Shifter) Pos() int {
-	return z.end - z.pos
-}
-
 // Peek returns the ith byte and possibly does an allocation.
 func (z *Shifter) Peek(i int) byte {
 	end := z.end + i
@@ -110,6 +95,21 @@ func (z *Shifter) PeekRune(i int) rune {
 	} else {
 		return rune(c&0x07)<<18 | rune(z.Peek(i+1)&0x3F)<<12 | rune(z.Peek(i+2)&0x3F)<<6 | rune(z.Peek(i+3)&0x3F)
 	}
+}
+
+// Move advances the 0 position of read.
+func (z *Shifter) Move(n int) {
+	z.end += n
+}
+
+// MoveTo sets the 0 position of read.
+func (z *Shifter) MoveTo(n int) {
+	z.end = z.pos + n
+}
+
+// Pos returns the 0 position of read.
+func (z *Shifter) Pos() int {
+	return z.end - z.pos
 }
 
 // Bytes returns the bytes of the current selection.
