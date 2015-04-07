@@ -3,6 +3,8 @@ package buffer // import "github.com/tdewolff/buffer"
 import "io"
 
 var MinBuf = 4096
+var MaxBuf = 4096                 // dummy
+var ErrBufferExceeded error = nil // dummy
 
 // Shifter is a buffered reader that allows peeking forward and shifting, taking an io.Reader.
 type Shifter struct {
