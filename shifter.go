@@ -8,6 +8,7 @@ var MinBuf = 4096
 type Shifter struct {
 	r   io.Reader
 	err error
+	eof bool
 
 	buf []byte
 	pos int
@@ -22,6 +23,7 @@ func NewShifter(r io.Reader) *Shifter {
 	}); ok {
 		return &Shifter{
 			err: io.EOF,
+			eof: true,
 			buf: buffer.Bytes(),
 		}
 	}
@@ -35,7 +37,7 @@ func NewShifter(r io.Reader) *Shifter {
 
 // Err returns the error.
 func (z *Shifter) Err() error {
-	if z.err == io.EOF && z.end < len(z.buf) {
+	if z.eof && z.end < len(z.buf) {
 		return nil
 	}
 	return z.err
@@ -43,7 +45,7 @@ func (z *Shifter) Err() error {
 
 // IsEOF returns true when it has encountered EOF and thus loaded the last buffer in memory.
 func (z *Shifter) IsEOF() bool {
-	return z.err == io.EOF
+	return z.eof
 }
 
 // Peek returns the ith byte and possibly does an allocation.
@@ -72,6 +74,7 @@ func (z *Shifter) Peek(i int) byte {
 		// read in to fill the buffer till capacity
 		var n int
 		n, z.err = z.r.Read(buf[d:cap(buf)])
+		z.eof = (z.err == io.EOF)
 		end -= z.pos
 		z.end -= z.pos
 		z.pos, z.buf = 0, buf[:d+n]
