@@ -61,10 +61,6 @@ func (z *Shifter) Peek(i int) byte {
 		d := len(z.buf) - z.pos
 		var buf []byte
 		if 2*d > c {
-			// if 2*c > MaxBuf {
-			// 	z.err = ErrExceeded
-			// 	return 0
-			// }
 			buf = make([]byte, d, 2*c)
 		} else {
 			buf = z.buf[:d]
@@ -100,17 +96,17 @@ func (z *Shifter) PeekRune(i int) rune {
 	}
 }
 
-// Move advances the 0 position of read.
+// Move advances the 0 position of Peek.
 func (z *Shifter) Move(n int) {
 	z.end += n
 }
 
-// MoveTo sets the 0 position of read.
+// MoveTo sets the 0 position of Peek.
 func (z *Shifter) MoveTo(n int) {
 	z.end = z.pos + n
 }
 
-// Pos returns the 0 position of read.
+// Pos returns the 0 position of Peek.
 func (z *Shifter) Pos() int {
 	return z.end - z.pos
 }
