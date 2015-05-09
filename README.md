@@ -52,6 +52,24 @@ Moving the end position can go through `Move(int)` which also accepts negative i
 
 When the internal `io.Reader` returned an error, `Err() error` will return that error (even if subsequent peeks  are still possible). If `Peek(int) byte` returns `0` when an error occurred. `IsEOF() bool` is a faster alternative than `Err() == io.EOF`, if it returns true it means the internal buffer will not be reallocated/overwritten. So returned byte slices need not be copied for use after subsequent `Peek(int) byte` calls. When the `io.Reader` provides the `Bytes() []byte` function (which `Reader` does in this package), it will use that buffer instead and thus `IsEOF()` return always `true` (ie. copying returned slices is not needed).
 
+``` go
+r := NewShifter(file)
+
+r.Move(4)
+fmt.Println(z.r.Pos()) // 4
+fmt.Println(string(z.r.Shift())) // the first four bytes
+
+fmt.Println(z.r.Pos()) // 0 after shifting
+fmt.Println(z.r.Peek(0)) // the fifth byte
+fmt.Println(z.r.PeekRune(0)) // the fifth byte's rune and its length
+
+r.MoveTo(2)
+fmt.Println(z.r.Pos()) // 2
+
+r.Skip()
+fmt.Println(z.r.Pos()) // 0 after shifting
+```
+
 ## License
 Released under the [MIT license](LICENSE.md).
 
