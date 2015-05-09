@@ -8,6 +8,7 @@ package buffer // import "github.com/tdewolff/buffer"
 
 import "io"
 
+// MinBuf specified the initial length of the internal shifter buffer.
 var MinBuf = 4096
 
 // Shifter is a buffered reader that allows peeking forward and shifting, taking an io.Reader.
@@ -41,7 +42,7 @@ func NewShifter(r io.Reader) *Shifter {
 	return z
 }
 
-// Err returns the error.
+// Err returns the error returned from io.Reader. It may still return valid bytes for a while though.
 func (z *Shifter) Err() error {
 	if z.eof && z.end < len(z.buf) {
 		return nil
@@ -49,12 +50,14 @@ func (z *Shifter) Err() error {
 	return z.err
 }
 
-// IsEOF returns true when it has encountered EOF and thus loaded the last buffer in memory.
+// IsEOF returns true when it has encountered EOF. When true it has loaded the last data in memory (ie. it will not be overwritten).
+// Calling IsEOF is faster than checking Err() == io.EOF.
 func (z *Shifter) IsEOF() bool {
 	return z.eof
 }
 
-// Peek returns the ith byte and possibly does an allocation.
+// Peek returns the ith byte relative to the end position and possibly does an allocation. Calling Peek may invalidate previous returned byte slices by Bytes or Shift, unless IsEOF returns true.
+// Peek returns zero when an error has occurred, Err return the error.
 func (z *Shifter) Peek(i int) byte {
 	end := z.end + i
 	if end >= len(z.buf) {
@@ -87,7 +90,7 @@ func (z *Shifter) Peek(i int) byte {
 	return z.buf[end]
 }
 
-// PeekRune returns the rune of the ith byte.
+// PeekRune returns the rune and rune length of the ith byte relative to the end position.
 func (z *Shifter) PeekRune(i int) (rune, int) {
 	// from unicode/utf8
 	c := z.Peek(i)
@@ -102,17 +105,17 @@ func (z *Shifter) PeekRune(i int) (rune, int) {
 	}
 }
 
-// Move advances the 0 position of Peek.
+// Move advances the end position.
 func (z *Shifter) Move(n int) {
 	z.end += n
 }
 
-// MoveTo sets the 0 position of Peek.
+// MoveTo sets the end position.
 func (z *Shifter) MoveTo(n int) {
 	z.end = z.pos + n
 }
 
-// Pos returns the 0 position of Peek.
+// Pos returns the end position.
 func (z *Shifter) Pos() int {
 	return z.end - z.pos
 }
@@ -122,14 +125,14 @@ func (z *Shifter) Bytes() []byte {
 	return z.buf[z.pos:z.end]
 }
 
-// Shift returns the bytes of the current selection and collapses the position.
+// Shift returns the bytes of the current selection and collapses the position to the end.
 func (z *Shifter) Shift() []byte {
 	b := z.buf[z.pos:z.end]
 	z.pos = z.end
 	return b
 }
 
-// Skip collapses the position.
+// Skip collapses the position to the end.
 func (z *Shifter) Skip() {
 	z.pos = z.end
 }
