@@ -65,10 +65,18 @@ func TestShiftBufferSmall(t *testing.T) {
 
 func TestShiftBufferRunes(t *testing.T) {
 	var b = NewShifter(bytes.NewBufferString("aæ†\U00100000"))
-	assert.Equal(t, 'a', b.PeekRune(0), "first character must be rune 'a'")
-	assert.Equal(t, 'æ', b.PeekRune(1), "second character must be rune 'æ'")
-	assert.Equal(t, '†', b.PeekRune(3), "fourth character must be rune '†'")
-	assert.Equal(t, '\U00100000', b.PeekRune(6), "seventh character must be rune '\U00100000'")
+	r, n := b.PeekRune(0)
+	assert.Equal(t, 1, n, "first character must be length 1")
+	assert.Equal(t, 'a', r, "first character must be rune 'a'")
+	r, n = b.PeekRune(1)
+	assert.Equal(t, 2, n, "second character must be length 2")
+	assert.Equal(t, 'æ', r, "second character must be rune 'æ'")
+	r, n = b.PeekRune(3)
+	assert.Equal(t, 3, n, "fourth character must be length 3")
+	assert.Equal(t, '†', r, "fourth character must be rune '†'")
+	r, n = b.PeekRune(6)
+	assert.Equal(t, 4, n, "seventh character must be length 4")
+	assert.Equal(t, '\U00100000', r, "seventh character must be rune '\U00100000'")
 }
 
 func TestShiftBufferZeroLen(t *testing.T) {

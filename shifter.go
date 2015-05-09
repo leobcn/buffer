@@ -82,17 +82,17 @@ func (z *Shifter) Peek(i int) byte {
 }
 
 // PeekRune returns the rune of the ith byte.
-func (z *Shifter) PeekRune(i int) rune {
+func (z *Shifter) PeekRune(i int) (rune, int) {
 	// from unicode/utf8
 	c := z.Peek(i)
 	if c < 0xC0 {
-		return rune(c)
+		return rune(c), 1
 	} else if c < 0xE0 {
-		return rune(c&0x1F)<<6 | rune(z.Peek(i+1)&0x3F)
+		return rune(c&0x1F)<<6 | rune(z.Peek(i+1)&0x3F), 2
 	} else if c < 0xF0 {
-		return rune(c&0x0F)<<12 | rune(z.Peek(i+1)&0x3F)<<6 | rune(z.Peek(i+2)&0x3F)
+		return rune(c&0x0F)<<12 | rune(z.Peek(i+1)&0x3F)<<6 | rune(z.Peek(i+2)&0x3F), 3
 	} else {
-		return rune(c&0x07)<<18 | rune(z.Peek(i+1)&0x3F)<<12 | rune(z.Peek(i+2)&0x3F)<<6 | rune(z.Peek(i+3)&0x3F)
+		return rune(c&0x07)<<18 | rune(z.Peek(i+1)&0x3F)<<12 | rune(z.Peek(i+2)&0x3F)<<6 | rune(z.Peek(i+3)&0x3F), 4
 	}
 }
 
