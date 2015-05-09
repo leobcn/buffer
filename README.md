@@ -23,7 +23,7 @@ Writer is a buffer that implements the `io.Writer` interface. It is a much thinn
 The reset functionality allows for better memory reuse. After calling `Reset`, it will overwrite the current buffer and thus reduce allocations.
 
 ## Shifter
-Shifter is a read buffer specifically for building tokenizers. It reads in chunks from an `io.Reader` and allows to keep track two positions: the start and end position. The start position is the beginning of the current token being parsed, the end position is being moved forward until a valid token is found. Calling `Shift` will collapse the positions to the end and return the parsed `[]byte`.
+Shifter is a read buffer specifically for building lexers. It reads in chunks from an `io.Reader` and allows to keep track two positions: the start and end position. The start position is the beginning of the current token being parsed, the end position is being moved forward until a valid token is found. Calling `Shift` will collapse the positions to the end and return the parsed `[]byte`.
 
 Moving the end position can go through `Move(int)` which also accepts negative integers or `MoveTo(int)` where the integer will be the new length of the selected bytes. `MoveTo(int)` is useful when you saved a previous position through `Pos() int` and want to return to that position.
 
