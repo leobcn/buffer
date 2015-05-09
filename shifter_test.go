@@ -48,6 +48,8 @@ func TestShiftBuffer(t *testing.T) {
 
 	b.Move(len(s) - len("Lorem ") - 1)
 	assert.Nil(t, b.Err(), "error must be nil just before the end of the buffer")
+	b.Skip()
+	assert.Equal(t, 0, b.Pos(), "after skipping position must be 0")
 	b.Move(1)
 	assert.Equal(t, io.EOF, b.Err(), "error must be EOF when past the buffer")
 	b.Move(-1)
@@ -56,29 +58,17 @@ func TestShiftBuffer(t *testing.T) {
 
 func TestShiftBufferSmall(t *testing.T) {
 	MinBuf = 4
-	MaxBuf = 8
-
 	s := `abcdefgh`
 	b := NewShifter(&ReaderMockup{bytes.NewBufferString(s)})
-
-	b.Move(4)
-	assert.Equal(t, false, b.IsEOF(), "buffer must not be fully in memory")
-	assert.Equal(t, byte('e'), b.Peek(0), "first character must be 'e' at position 4")
-	b.Move(4)
-	assert.Equal(t, byte(0), b.Peek(0), "first character past max buffer size must give error and return 0")
-	//assert.Equal(t, ErrBufferExceeded, b.Err(), "error must be ErrBufferExceeded when past the max buffer size")
-	assert.Equal(t, byte(0), b.Peek(0), "peek when readErr != nil must return 0")
-
-	b = NewShifter(&ReaderMockup{bytes.NewBufferString(s)})
 	assert.Equal(t, byte('f'), b.Peek(5), "first character must be 'f' at position 5")
 }
 
 func TestShiftBufferRunes(t *testing.T) {
-	var b = NewShifter(bytes.NewBufferString("aæ†"))
+	var b = NewShifter(bytes.NewBufferString("aæ†\U00100000"))
 	assert.Equal(t, 'a', b.PeekRune(0), "first character must be rune 'a'")
 	assert.Equal(t, 'æ', b.PeekRune(1), "second character must be rune 'æ'")
 	assert.Equal(t, '†', b.PeekRune(3), "fourth character must be rune '†'")
-	// Can't test 4 byte unicode codepoints my editor
+	assert.Equal(t, '\U00100000', b.PeekRune(6), "seventh character must be rune '\U00100000'")
 }
 
 func TestShiftBufferZeroLen(t *testing.T) {

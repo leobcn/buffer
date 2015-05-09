@@ -16,16 +16,16 @@ func NewReader(buf []byte) *Reader {
 }
 
 // Read reads bytes into the given byte slice and returns the number of bytes read and an error if occurred.
-func (r *Reader) Read(b []byte) (int, error) {
+func (r *Reader) Read(b []byte) (n int, err error) {
 	if len(b) == 0 {
 		return 0, nil
 	}
 	if r.pos >= len(r.buf) {
 		return 0, io.EOF
 	}
-	n := copy(b, r.buf[r.pos:])
+	n = copy(b, r.buf[r.pos:])
 	r.pos += n
-	return n, nil
+	return
 }
 
 // Bytes returns the underlying byte slice.
