@@ -1,6 +1,8 @@
 package buffer // import "github.com/tdewolff/buffer"
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"testing"
 
@@ -30,4 +32,12 @@ func TestReader(t *testing.T) {
 	n, err = r.Read(nil)
 	assert.Nil(t, err, "error must be nil")
 	assert.Equal(t, 0, n, "read to nil buffer must return 0 characters read")
+}
+
+func ExampleNewReader() {
+	r := NewReader([]byte("Lorem ipsum"))
+	w := &bytes.Buffer{}
+	io.Copy(w, r)
+	fmt.Println(w.String())
+	// Output: Lorem ipsum
 }

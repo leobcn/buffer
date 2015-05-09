@@ -2,6 +2,7 @@ package buffer // import "github.com/tdewolff/buffer"
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"testing"
 
@@ -82,6 +83,48 @@ func TestShiftBufferRunes(t *testing.T) {
 func TestShiftBufferZeroLen(t *testing.T) {
 	var b = NewShifter(&ReaderMockup{bytes.NewBufferString("")})
 	assert.Equal(t, byte(0), b.Peek(0), "first character must yield error")
+}
+
+////////////////////////////////////////////////////////////////
+
+func ExampleNewShifter() {
+	b := bytes.NewBufferString("Lorem ipsum")
+	r := NewShifter(b)
+	for {
+		c := r.Peek(0)
+		if c == ' ' {
+			break
+		}
+		r.Move(1)
+	}
+	fmt.Println(string(r.Shift()))
+	// Output: Lorem
+}
+
+func ExampleShifter_PeekRune() {
+	b := bytes.NewBufferString("† dagger") // † has a byte length of 3
+	r := NewShifter(b)
+
+	c, n := r.PeekRune(0)
+	fmt.Println(string(c), n)
+	// Output: † 3
+}
+
+func ExampleShifter_IsEOF() {
+	b := bytes.NewBufferString("Lorem ipsum") // bytes.Buffer provides a Bytes function, NewShifter uses that and r.IsEOF() always returns true
+	r := NewShifter(b)
+	r.Move(5)
+
+	lorem := r.Shift()
+	if !r.IsEOF() { // required when io.Reader doesn't provide a Bytes function
+		buf := make([]byte, len(lorem))
+		copy(buf, lorem)
+		lorem = buf
+	}
+
+	r.Peek(0) // might reallocate the internal buffer
+	fmt.Println(string(lorem))
+	// Output: Lorem
 }
 
 ////////////////////////////////////////////////////////////////

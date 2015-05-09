@@ -2,6 +2,8 @@
 
 This package contains several buffer types used in https://github.com/tdewolff/parse for example.
 
+Examples are available in the GoDoc.
+
 ## Installation
 Run the following command
 
@@ -15,31 +17,10 @@ import "github.com/tdewolff/buffer"
 ## Reader
 Reader is a wrapper around a `[]byte` that implements the `io.Reader` interface. It is a much thinner layer than `bytes.Buffer` provides and is therefore faster.
 
-``` go
-r := buffer.NewReader([]byte("Lorem ipsum"))
-
-w := &bytes.Buffer{}
-io.Copy(w, r)
-fmt.Println(w.String()) // "Lorem ipsum"
-
-fmt.Println(string(r.Bytes())) // "Lorem ipsum"
-```
-
 ## Writer
 Writer is a buffer that implements the `io.Writer` interface. It is a much thinner layer than `bytes.Buffer` provides and is therefore faster. It will expand the buffer when needed.
 
 The reset functionality allows for better memory reuse. After calling `Reset`, it will overwrite the current buffer and thus reduce allocations.
-
-``` go
-w := buffer.NewWriter(make([]byte, 0, 3))
-
-w.Write([]byte("Lorem ipsum"))
-fmt.Println(string(r.Bytes())) // "Lorem ipsum"
-
-w.Reset() // reuse buffer
-w.Write([]byte("dolor sit amet"))
-fmt.Println(string(r.Bytes())) // "dolor sit amet"
-```
 
 ## Shifter
 Shifter is a read buffer specifically for building tokenizers. It reads in chunks from an `io.Reader` and allows to keep track two positions: the start and end position. The start position is the beginning of the current token being parsed, the end position is being moved forward until a valid token is found. Calling `Shift` will collapse the positions to the end and return the parsed `[]byte`.
@@ -51,24 +32,6 @@ Moving the end position can go through `Move(int)` which also accepts negative i
 `Bytes() []byte` will return the currently selected bytes, `Skip()` will collapse the selection. `Shift() []byte` is a combination of `Bytes() []byte` and `Skip()`.
 
 When the internal `io.Reader` returned an error, `Err() error` will return that error (even if subsequent peeks  are still possible). If `Peek(int) byte` returns `0` when an error occurred. `IsEOF() bool` is a faster alternative than `Err() == io.EOF`, if it returns true it means the internal buffer will not be reallocated/overwritten. So returned byte slices need not be copied for use after subsequent `Peek(int) byte` calls. When the `io.Reader` provides the `Bytes() []byte` function (which `Reader` does in this package), it will use that buffer instead and thus `IsEOF()` return always `true` (ie. copying returned slices is not needed).
-
-``` go
-r := NewShifter(file)
-
-r.Move(4)
-fmt.Println(z.r.Pos()) // 4
-fmt.Println(string(z.r.Shift())) // the first four bytes
-
-fmt.Println(z.r.Pos()) // 0 after shifting
-fmt.Println(z.r.Peek(0)) // the fifth byte
-fmt.Println(z.r.PeekRune(0)) // the fifth byte's rune and its length
-
-r.MoveTo(2)
-fmt.Println(z.r.Pos()) // 2
-
-r.Skip()
-fmt.Println(z.r.Pos()) // 0 after shifting
-```
 
 ## License
 Released under the [MIT license](LICENSE.md).
