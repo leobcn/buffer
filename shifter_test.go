@@ -58,9 +58,9 @@ func TestShiftBuffer(t *testing.T) {
 
 func TestShiftBufferSmall(t *testing.T) {
 	MinBuf = 4
-	s := `abcdefgh`
+	s := `abcdefghi`
 	b := NewShifter(&ReaderMockup{bytes.NewBufferString(s)})
-	assert.Equal(t, byte('f'), b.Peek(5), "first character must be 'f' at position 5")
+	assert.Equal(t, byte('i'), b.Peek(8), "first character must be 'i' at position 8")
 }
 
 func TestShiftBufferRunes(t *testing.T) {

@@ -61,7 +61,7 @@ func (z *Shifter) Peek(i int) byte {
 		d := len(z.buf) - z.pos
 		var buf []byte
 		if 2*d > c {
-			buf = make([]byte, d, 2*c)
+			buf = make([]byte, d, 2*c+end-z.pos)
 		} else {
 			buf = z.buf[:d]
 		}
