@@ -2,7 +2,7 @@ package buffer // import "github.com/tdewolff/buffer"
 
 import "io"
 
-// Reader implements a reader over a byte slice.
+// Reader implements an io.Reader over a byte slice.
 type Reader struct {
 	buf []byte
 	pos int

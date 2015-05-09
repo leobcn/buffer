@@ -1,6 +1,6 @@
 package buffer // import "github.com/tdewolff/buffer"
 
-// Writer implements a write over a byte slice.
+// Writer implements an io.Writer over a byte slice.
 type Writer struct {
 	buf []byte
 }
@@ -12,7 +12,7 @@ func NewWriter(buf []byte) *Writer {
 	}
 }
 
-// Write writes bytes from the given byte slice and returns the number of bytes written and an error if occurred.
+// Write writes bytes from the given byte slice and returns the number of bytes written and an error if occurred. When err != nil, n == 0.
 func (w *Writer) Write(b []byte) (int, error) {
 	n := len(b)
 	end := len(w.buf)
@@ -30,7 +30,7 @@ func (w *Writer) Bytes() []byte {
 	return w.buf
 }
 
-// Reset empties and reuses the current buffer.
+// Reset empties and reuses the current buffer. Subsequent writes will overwrite the buffer, so any reference to the underlying slice is invalidated after this call.
 func (w *Writer) Reset() {
 	w.buf = w.buf[:0]
 }
