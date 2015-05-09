@@ -2,7 +2,7 @@
 
 This package contains several buffer types used in https://github.com/tdewolff/parse for example.
 
-Examples are available in the GoDoc.
+Examples are available in the [GoDoc](http://godoc.org/github.com/tdewolff/buffer).
 
 ## Installation
 Run the following command
