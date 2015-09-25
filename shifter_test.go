@@ -129,6 +129,14 @@ func ExampleShifter_IsEOF() {
 
 ////////////////////////////////////////////////////////////////
 
+func BenchmarkPeek(b *testing.B) {
+	r := NewShifter(bytes.NewBufferString("Lorem ipsum"))
+	for i := 0; i < b.N; i++ {
+		j := i % 11
+		r.Peek(j)
+	}
+}
+
 var c = 0
 var haystack = []byte("abcdefghijklmnopqrstuvwxyz")
 

@@ -58,8 +58,8 @@ func (z *Shifter) IsEOF() bool {
 
 // Peek returns the ith byte relative to the end position and possibly does an allocation. Calling Peek may invalidate previous returned byte slices by Bytes or Shift, unless IsEOF returns true.
 // Peek returns zero when an error has occurred, Err return the error.
-func (z *Shifter) Peek(i int) byte {
-	end := z.end + i
+func (z *Shifter) Peek(end int) byte {
+	end += z.end
 	if end >= len(z.buf) {
 		if z.err != nil {
 			return 0
