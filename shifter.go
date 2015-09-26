@@ -50,14 +50,14 @@ func (z *Shifter) Err() error {
 	return z.err
 }
 
-// IsEOF returns true when it has encountered EOF. When true it has loaded the last data in memory (ie. it will not be overwritten).
+// IsEOF returns true when it has encountered EOF meaning that it has loaded the last data in memory (ie. previously returned byte slice will not be overwritten by Peek).
 // Calling IsEOF is faster than checking Err() == io.EOF.
 func (z *Shifter) IsEOF() bool {
 	return z.eof
 }
 
 // Peek returns the ith byte relative to the end position and possibly does an allocation. Calling Peek may invalidate previous returned byte slices by Bytes or Shift, unless IsEOF returns true.
-// Peek returns zero when an error has occurred, Err return the error.
+// Peek returns zero when an error has occurred, Err returns the error.
 func (z *Shifter) Peek(end int) byte {
 	end += z.end
 	if end >= len(z.buf) {
