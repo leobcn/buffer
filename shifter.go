@@ -56,9 +56,9 @@ func (z *Shifter) IsEOF() bool {
 	return z.eof
 }
 
-func (z *Shifter) read(end int) bool {
+func (z *Shifter) read(end int) byte {
 	if z.err != nil {
-		return false
+		return 0
 	}
 
 	// reallocate a new buffer (possibly larger)
@@ -84,17 +84,17 @@ func (z *Shifter) read(end int) bool {
 			z.err = io.EOF
 			z.eof = true
 		}
-		return false
+		return 0
 	}
-	return true
+	return z.buf[end]
 }
 
 // Peek returns the ith byte relative to the end position and possibly does an allocation. Calling Peek may invalidate previous returned byte slices by Bytes or Shift, unless IsEOF returns true.
 // Peek returns zero when an error has occurred, Err returns the error.
 func (z *Shifter) Peek(end int) byte {
 	end += z.end
-	if end >= len(z.buf) && !z.read(end) {
-		return 0
+	if end >= len(z.buf) {
+		return z.read(end)
 	}
 	return z.buf[end]
 }
