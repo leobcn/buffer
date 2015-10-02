@@ -7,22 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tdewolff/test"
 )
-
-// Don't implement Bytes() to test for buffer exceeding.
-type ReaderMockup struct {
-	r io.Reader
-}
-
-func (r *ReaderMockup) Read(p []byte) (int, error) {
-	n, err := r.r.Read(p)
-	if n < len(p) {
-		err = io.EOF
-	}
-	return n, err
-}
-
-////////////////////////////////////////////////////////////////
 
 func TestShiftBuffer(t *testing.T) {
 	var s = `Lorem ipsum dolor sit amet, consectetur adipiscing elit.`
@@ -60,7 +46,7 @@ func TestShiftBuffer(t *testing.T) {
 func TestShiftBufferSmall(t *testing.T) {
 	MinBuf = 4
 	s := `abcdefghi`
-	b := NewShifter(&ReaderMockup{bytes.NewBufferString(s)})
+	b := NewShifter(test.NewPlainReader(bytes.NewBufferString(s)))
 	assert.Equal(t, byte('i'), b.Peek(8), "first character must be 'i' at position 8")
 }
 
@@ -81,7 +67,7 @@ func TestShiftBufferRunes(t *testing.T) {
 }
 
 func TestShiftBufferZeroLen(t *testing.T) {
-	var b = NewShifter(&ReaderMockup{bytes.NewBufferString("")})
+	var b = NewShifter(test.NewPlainReader(bytes.NewBufferString("")))
 	assert.Equal(t, byte(0), b.Peek(0), "first character must yield error")
 }
 
