@@ -80,6 +80,10 @@ func (z *Shifter) read(end int) bool {
 	z.end -= z.pos
 	z.pos, z.buf = 0, buf[:d+n]
 	if n == 0 {
+		if z.err == nil {
+			z.err = io.EOF
+			z.eof = true
+		}
 		return false
 	}
 	return true
