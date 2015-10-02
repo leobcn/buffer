@@ -56,36 +56,41 @@ func (z *Shifter) IsEOF() bool {
 	return z.eof
 }
 
+func (z *Shifter) read(end int) bool {
+	if z.err != nil {
+		return false
+	}
+
+	// reallocate a new buffer (possibly larger)
+	c := cap(z.buf)
+	d := len(z.buf) - z.pos
+	var buf []byte
+	if 2*d > c {
+		buf = make([]byte, d, 2*c+end-z.pos)
+	} else {
+		buf = z.buf[:d]
+	}
+	copy(buf, z.buf[z.pos:])
+
+	// read in to fill the buffer till capacity
+	var n int
+	n, z.err = z.r.Read(buf[d:cap(buf)])
+	z.eof = (z.err == io.EOF)
+	end -= z.pos
+	z.end -= z.pos
+	z.pos, z.buf = 0, buf[:d+n]
+	if n == 0 {
+		return false
+	}
+	return true
+}
+
 // Peek returns the ith byte relative to the end position and possibly does an allocation. Calling Peek may invalidate previous returned byte slices by Bytes or Shift, unless IsEOF returns true.
 // Peek returns zero when an error has occurred, Err returns the error.
 func (z *Shifter) Peek(end int) byte {
 	end += z.end
-	if end >= len(z.buf) {
-		if z.err != nil {
-			return 0
-		}
-
-		// reallocate a new buffer (possibly larger)
-		c := cap(z.buf)
-		d := len(z.buf) - z.pos
-		var buf []byte
-		if 2*d > c {
-			buf = make([]byte, d, 2*c+end-z.pos)
-		} else {
-			buf = z.buf[:d]
-		}
-		copy(buf, z.buf[z.pos:])
-
-		// read in to fill the buffer till capacity
-		var n int
-		n, z.err = z.r.Read(buf[d:cap(buf)])
-		z.eof = (z.err == io.EOF)
-		end -= z.pos
-		z.end -= z.pos
-		z.pos, z.buf = 0, buf[:d+n]
-		if n == 0 {
-			return 0
-		}
+	if end >= len(z.buf) && !z.read(end) {
+		return 0
 	}
 	return z.buf[end]
 }
