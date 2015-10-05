@@ -77,7 +77,7 @@ type Lexer struct {
 	pos       int // index in buf
 	prevStart int
 
-	Free func(n int)
+	Free func(int) // this refers to pool.free, otherwise the Free function is not inlined and causes overhead
 }
 
 // NewLexer returns a new Lexer for a given io.Reader with a 4kB estimated buffer size.
