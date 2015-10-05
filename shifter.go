@@ -1,15 +1,6 @@
-/*
-Package buffer contains buffer and wrapper types for byte slices. It is useful for writing lexers or other high-performance byte slice handling.
-
-The `Reader` and `Writer` types implement the `io.Reader` and `io.Writer` respectively and provide a thinner and faster interface than `bytes.Buffer`.
-The `Shifter` type is useful for building lexers because it keeps track of the start and end position of a byte selection, and shifts the bytes whenever a valid token is found.
-*/
 package buffer // import "github.com/tdewolff/buffer"
 
 import "io"
-
-// MinBuf specified the initial length of the internal shifter buffer.
-var MinBuf = 4096
 
 // Shifter is a buffered reader that allows peeking forward and shifting, taking an io.Reader.
 type Shifter struct {
@@ -22,8 +13,15 @@ type Shifter struct {
 	end int
 }
 
-// NewShifter returns a new Shifter for a given io.Reader.
+// NewShifter returns a new Shifter for a given io.Reader with a 4kB estimated buffer size.
+// If the io.Reader implements Bytes, that buffer is used instead.
 func NewShifter(r io.Reader) *Shifter {
+	return NewShifterSize(r, defaultBufSize)
+}
+
+// NewShifterSize returns a new Shifter for a given io.Reader and estimated required buffer size.
+// If the io.Reader implements Bytes, that buffer is used instead.
+func NewShifterSize(r io.Reader, size int) *Shifter {
 	// If reader has the bytes in memory already, use that instead!
 	if buffer, ok := r.(interface {
 		Bytes() []byte
@@ -36,7 +34,7 @@ func NewShifter(r io.Reader) *Shifter {
 	}
 	z := &Shifter{
 		r:   r,
-		buf: make([]byte, 0, MinBuf),
+		buf: make([]byte, 0, size),
 	}
 	z.Peek(0)
 	return z
