@@ -59,11 +59,11 @@ func TestLexer(t *testing.T) {
 	z.Move(1)
 	assert.Equal(t, byte('o'), z.Peek(0), "must be 'o' at position 1")
 	assert.Equal(t, byte('r'), z.Peek(1), "must be 'r' at position 1")
-	z.MoveTo(6)
+	z.Rewind(6)
 	assert.Equal(t, byte('i'), z.Peek(0), "must be 'i' at position 6")
 	assert.Equal(t, byte('p'), z.Peek(1), "must be 'p' at position 7")
 
-	assert.Equal(t, []byte("Lorem "), z.Bytes(), "buffered string must now read 'Lorem ' when at position 6")
+	assert.Equal(t, []byte("Lorem "), z.Lexeme(), "buffered string must now read 'Lorem ' when at position 6")
 	assert.Equal(t, []byte("Lorem "), z.Shift(), "shift must return the buffered string")
 	assert.Equal(t, 0, z.Pos(), "after shifting position must be 0")
 	assert.Equal(t, byte('i'), z.Peek(0), "must be 'i' at position 0 after shifting")

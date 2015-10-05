@@ -72,9 +72,12 @@ type Lexer struct {
 
 	pool BufferPool
 
-	buf []byte
-	pos int // index in buf
-	end int // index in buf
+	buf       []byte
+	start     int // index in buf
+	pos       int // index in buf
+	prevStart int
+
+	Free func(n int)
 }
 
 // NewLexer returns a new Lexer for a given io.Reader with a 4kB estimated buffer size.
@@ -86,59 +89,58 @@ func NewLexer(r io.Reader) *Lexer {
 // NewLexerSize returns a new Lexer for a given io.Reader and estimated required buffer size.
 // If the io.Reader implements Bytes, that buffer is used instead.
 func NewLexerSize(r io.Reader, size int) *Lexer {
+	var z *Lexer
 	// if reader has the bytes in memory already, use that instead
 	if buffer, ok := r.(interface {
 		Bytes() []byte
 	}); ok {
-		return &Lexer{
+		z = &Lexer{
 			err: io.EOF,
 			buf: buffer.Bytes(),
 		}
+	} else {
+		z = &Lexer{
+			r:   r,
+			buf: make([]byte, 0, size),
+		}
+		z.Peek(0)
 	}
-	z := &Lexer{
-		r:   r,
-		buf: make([]byte, 0, size),
-	}
-	z.Peek(0)
+	z.Free = z.pool.free
 	return z
 }
 
-func (z *Lexer) read(end int) byte {
+func (z *Lexer) read(pos int) byte {
 	if z.err != nil {
 		return 0
 	}
 
 	// get new buffer
 	c := cap(z.buf)
-	d := len(z.buf) - z.pos
+	d := len(z.buf) - z.start
 	if 2*d > c { // if the token is larger than half the buffer, increase buffer size
 		c = 2*c + d
 	}
-	buf := z.pool.swap(z.buf[:z.pos], c)
-	copy(buf[:d], z.buf[z.pos:]) // copy the left-overs (unfinished token) from the old buffer
+	buf := z.pool.swap(z.buf[:z.start], c)
+	copy(buf[:d], z.buf[z.start:]) // copy the left-overs (unfinished token) from the old buffer
 
 	// read in new data for the rest of the buffer
 	var n int
 	n, z.err = z.r.Read(buf[d:cap(buf)])
-	end -= z.pos
-	z.end -= z.pos
-	z.pos, z.buf = 0, buf[:d+n]
+	pos -= z.start
+	z.pos -= z.start
+	z.start, z.buf = 0, buf[:d+n]
 	if n == 0 {
 		if z.err == nil {
 			z.err = io.EOF
 		}
 		return 0
 	}
-	return z.buf[end]
-}
-
-func (z *Lexer) Free(n int) {
-	z.pool.free(n)
+	return z.buf[pos]
 }
 
 // Err returns the error returned from io.Reader. It may still return valid bytes for a while though.
 func (z *Lexer) Err() error {
-	if z.err == io.EOF && z.end < len(z.buf) {
+	if z.err == io.EOF && z.pos < len(z.buf) {
 		return nil
 	}
 	return z.err
@@ -146,57 +148,64 @@ func (z *Lexer) Err() error {
 
 // Peek returns the ith byte relative to the end position and possibly does an allocation.
 // Peek returns zero when an error has occurred, Err returns the error.
-func (z *Lexer) Peek(end int) byte {
-	end += z.end
-	if end >= len(z.buf) {
-		return z.read(end)
+func (z *Lexer) Peek(pos int) byte {
+	pos += z.pos
+	if pos >= len(z.buf) {
+		return z.read(pos)
 	}
-	return z.buf[end]
+	return z.buf[pos]
 }
 
 // PeekRune returns the rune and rune length of the ith byte relative to the end position.
-func (z *Lexer) PeekRune(i int) (rune, int) {
+func (z *Lexer) PeekRune(pos int) (rune, int) {
 	// from unicode/utf8
-	c := z.Peek(i)
+	c := z.Peek(pos)
 	if c < 0xC0 {
 		return rune(c), 1
 	} else if c < 0xE0 {
-		return rune(c&0x1F)<<6 | rune(z.Peek(i+1)&0x3F), 2
+		return rune(c&0x1F)<<6 | rune(z.Peek(pos+1)&0x3F), 2
 	} else if c < 0xF0 {
-		return rune(c&0x0F)<<12 | rune(z.Peek(i+1)&0x3F)<<6 | rune(z.Peek(i+2)&0x3F), 3
+		return rune(c&0x0F)<<12 | rune(z.Peek(pos+1)&0x3F)<<6 | rune(z.Peek(pos+2)&0x3F), 3
 	} else {
-		return rune(c&0x07)<<18 | rune(z.Peek(i+1)&0x3F)<<12 | rune(z.Peek(i+2)&0x3F)<<6 | rune(z.Peek(i+3)&0x3F), 4
+		return rune(c&0x07)<<18 | rune(z.Peek(pos+1)&0x3F)<<12 | rune(z.Peek(pos+2)&0x3F)<<6 | rune(z.Peek(pos+3)&0x3F), 4
 	}
 }
 
-// Move advances the end position.
+// Move advances the position.
 func (z *Lexer) Move(n int) {
-	z.end += n
-}
-
-// MoveTo rewinds the position to the given mark.
-func (z *Lexer) MoveTo(n int) {
-	z.end = z.pos + n
+	z.pos += n
 }
 
 // Pos returns a mark to which can be rewinded.
 func (z *Lexer) Pos() int {
-	return z.end - z.pos
+	return z.pos - z.start
 }
 
-// Bytes returns the bytes of the current selection.
-func (z *Lexer) Bytes() []byte {
-	return z.buf[z.pos:z.end]
+// Rewind rewinds the position to the given position.
+func (z *Lexer) Rewind(pos int) {
+	z.pos = z.start + pos
 }
 
-// Shift returns the bytes of the current selection and collapses the position to the end.
+// Lexeme returns the bytes of the current selection.
+func (z *Lexer) Lexeme() []byte {
+	return z.buf[z.start:z.pos]
+}
+
+// Shift returns the bytes of the current selection and collapses the position to the end of the selection.
 func (z *Lexer) Shift() []byte {
-	b := z.buf[z.pos:z.end]
-	z.pos = z.end
+	b := z.buf[z.start:z.pos]
+	z.start = z.pos
 	return b
 }
 
-// Skip collapses the position to the end.
+// ShiftLen returns the number of bytes moved since the last call to ShiftLen. This can be used in calls to Free because it takes into account multiple Shifts or Skips.
+func (z *Lexer) ShiftLen() int {
+	n := z.start - z.prevStart
+	z.prevStart = z.start
+	return n
+}
+
+// Skip collapses the position to the end of the selection.
 func (z *Lexer) Skip() {
-	z.pos = z.end
+	z.start = z.pos
 }
