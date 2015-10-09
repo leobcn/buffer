@@ -116,10 +116,11 @@ func (z *Lexer) read(pos int) byte {
 
 	// get new buffer
 	c := cap(z.buf)
-	d := len(z.buf) - z.start
-	if 2*d > c { // if the token is larger than half the buffer, increase buffer size
-		c = 2*c + d
+	p := pos - z.start
+	if 2*p > c { // if the token is larger than half the buffer, increase buffer size
+		c = 2*c + p
 	}
+	d := len(z.buf) - z.start
 	buf := z.pool.swap(z.buf[:z.start], c)
 	copy(buf[:d], z.buf[z.start:]) // copy the left-overs (unfinished token) from the old buffer
 
