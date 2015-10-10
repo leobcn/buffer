@@ -25,6 +25,11 @@ func (w *Writer) Write(b []byte) (int, error) {
 	return copy(w.buf[end:], b), nil
 }
 
+// Len returns the length of the underlying byte slice.
+func (w *Writer) Len() int {
+	return len(w.buf)
+}
+
 // Bytes returns the underlying byte slice.
 func (w *Writer) Bytes() []byte {
 	return w.buf
