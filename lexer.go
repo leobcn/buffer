@@ -8,7 +8,7 @@ type block struct {
 	active bool
 }
 
-type BufferPool struct {
+type bufferPool struct {
 	pool []block
 	head int // index in pool plus one
 	tail int // index in pool plus one
@@ -16,10 +16,10 @@ type BufferPool struct {
 	pos int // byte pos in tail
 }
 
-func (z *BufferPool) swap(oldBuf []byte, size int) []byte {
+func (z *bufferPool) swap(oldBuf []byte, size int) []byte {
 	// find new buffer that can be reused
 	swap := -1
-	for i, _ := range z.pool {
+	for i := range z.pool {
 		if !z.pool[i].active && size <= cap(z.pool[i].buf) {
 			swap = i
 			break
@@ -29,10 +29,10 @@ func (z *BufferPool) swap(oldBuf []byte, size int) []byte {
 		if z.tail == 0 && z.pos >= len(oldBuf) && size <= cap(oldBuf) { // but we can reuse the current buffer!
 			z.pos -= len(oldBuf)
 			return oldBuf[:0]
-		} else { // allocate new
-			z.pool = append(z.pool, block{make([]byte, 0, size), 0, true})
-			swap = len(z.pool) - 1
 		}
+		// allocate new
+		z.pool = append(z.pool, block{make([]byte, 0, size), 0, true})
+		swap = len(z.pool) - 1
 	}
 
 	newBuf := z.pool[swap].buf
@@ -50,7 +50,7 @@ func (z *BufferPool) swap(oldBuf []byte, size int) []byte {
 	return newBuf[:0]
 }
 
-func (z *BufferPool) free(n int) {
+func (z *bufferPool) free(n int) {
 	z.pos += n
 	// move the tail over to next buffers
 	for z.tail != 0 && z.pos >= len(z.pool[z.tail-1].buf) {
@@ -70,7 +70,7 @@ type Lexer struct {
 	r   io.Reader
 	err error
 
-	pool BufferPool
+	pool bufferPool
 
 	buf       []byte
 	start     int // index in buf
@@ -167,9 +167,8 @@ func (z *Lexer) PeekRune(pos int) (rune, int) {
 		return rune(c&0x1F)<<6 | rune(z.Peek(pos+1)&0x3F), 2
 	} else if c < 0xF0 {
 		return rune(c&0x0F)<<12 | rune(z.Peek(pos+1)&0x3F)<<6 | rune(z.Peek(pos+2)&0x3F), 3
-	} else {
-		return rune(c&0x07)<<18 | rune(z.Peek(pos+1)&0x3F)<<12 | rune(z.Peek(pos+2)&0x3F)<<6 | rune(z.Peek(pos+3)&0x3F), 4
 	}
+	return rune(c&0x07)<<18 | rune(z.Peek(pos+1)&0x3F)<<12 | rune(z.Peek(pos+2)&0x3F)<<6 | rune(z.Peek(pos+3)&0x3F), 4
 }
 
 // Move advances the position.
