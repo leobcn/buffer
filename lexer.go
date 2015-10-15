@@ -77,7 +77,7 @@ type Lexer struct {
 	pos       int // index in buf
 	prevStart int
 
-	Free func(int) // this refers to pool.free, otherwise the Free function is not inlined and causes overhead
+	free int
 }
 
 // NewLexer returns a new Lexer for a given io.Reader with a 4kB estimated buffer size.
@@ -105,7 +105,6 @@ func NewLexerSize(r io.Reader, size int) *Lexer {
 		}
 		z.Peek(0)
 	}
-	z.Free = z.pool.free
 	return z
 }
 
@@ -113,6 +112,10 @@ func (z *Lexer) read(pos int) byte {
 	if z.err != nil {
 		return 0
 	}
+
+	// free unused bytes
+	z.pool.free(z.free)
+	z.free = 0
 
 	// get new buffer
 	c := cap(z.buf)
@@ -145,6 +148,12 @@ func (z *Lexer) Err() error {
 		return nil
 	}
 	return z.err
+}
+
+// Free frees up bytes of length n from previously shifted tokens.
+// Each call to Shift should at one point be followed by a call to Free with a length returned by ShiftLen.
+func (z *Lexer) Free(n int) {
+	z.free += n
 }
 
 // Peek returns the ith byte relative to the end position and possibly does an allocation.
