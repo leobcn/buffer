@@ -89,23 +89,19 @@ func NewLexer(r io.Reader) *Lexer {
 // NewLexerSize returns a new Lexer for a given io.Reader and estimated required buffer size.
 // If the io.Reader implements Bytes, that buffer is used instead.
 func NewLexerSize(r io.Reader, size int) *Lexer {
-	var z *Lexer
 	// if reader has the bytes in memory already, use that instead
 	if buffer, ok := r.(interface {
 		Bytes() []byte
 	}); ok {
-		z = &Lexer{
+		return &Lexer{
 			err: io.EOF,
 			buf: buffer.Bytes(),
 		}
-	} else {
-		z = &Lexer{
-			r:   r,
-			buf: make([]byte, 0, size),
-		}
-		z.Peek(0)
 	}
-	return z
+	return &Lexer{
+		r:   r,
+		buf: make([]byte, 0, size),
+	}
 }
 
 func (z *Lexer) read(pos int) byte {
@@ -119,7 +115,7 @@ func (z *Lexer) read(pos int) byte {
 
 	// get new buffer
 	c := cap(z.buf)
-	p := pos - z.start
+	p := pos - z.start + 1
 	if 2*p > c { // if the token is larger than half the buffer, increase buffer size
 		c = 2*c + p
 	}

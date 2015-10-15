@@ -88,6 +88,9 @@ func TestLexerSmall(t *testing.T) {
 
 	z = NewLexerSize(test.NewPlainReader(bytes.NewBufferString(s)), 4)
 	assert.Equal(t, "m", string(z.Peek(12)), "first character must be 'm' at position 12")
+
+	z = NewLexerSize(test.NewPlainReader(bytes.NewBufferString(s)), 0)
+	assert.Equal(t, "e", string(z.Peek(4)), "first character must be '4' at position 4")
 }
 
 func TestLexerRunes(t *testing.T) {
