@@ -10,7 +10,7 @@ import (
 )
 
 func TestBufferPool(t *testing.T) {
-	z := &BufferPool{}
+	z := &bufferPool{}
 
 	lorem := []byte("Lorem ipsum")
 	dolor := []byte("dolor sit amet")
@@ -47,8 +47,8 @@ func TestBufferPool(t *testing.T) {
 }
 
 func TestLexer(t *testing.T) {
-	var s = `Lorem ipsum dolor sit amet, consectetur adipiscing elit.`
-	var z = NewLexer(bytes.NewBufferString(s))
+	s := `Lorem ipsum dolor sit amet, consectetur adipiscing elit.`
+	z := NewLexer(bytes.NewBufferString(s))
 
 	assert.Equal(t, io.EOF, z.err, "buffer must be fully in memory")
 	assert.Equal(t, nil, z.Err(), "buffer is at EOF but must not return EOF until we reach that")
@@ -91,7 +91,7 @@ func TestLexerSmall(t *testing.T) {
 }
 
 func TestLexerRunes(t *testing.T) {
-	var z = NewLexer(bytes.NewBufferString("aæ†\U00100000"))
+	z := NewLexer(bytes.NewBufferString("aæ†\U00100000"))
 	r, n := z.PeekRune(0)
 	assert.Equal(t, 1, n, "first character must be length 1")
 	assert.Equal(t, 'a', r, "first character must be rune 'a'")
@@ -107,12 +107,12 @@ func TestLexerRunes(t *testing.T) {
 }
 
 func TestLexerZeroLen(t *testing.T) {
-	var z = NewLexer(test.NewPlainReader(bytes.NewBufferString("")))
+	z := NewLexer(test.NewPlainReader(bytes.NewBufferString("")))
 	assert.Equal(t, byte(0), z.Peek(0), "first character must yield error")
 }
 
 func TestLexerEmptyReader(t *testing.T) {
-	var z = NewLexer(test.NewEmptyReader())
+	z := NewLexer(test.NewEmptyReader())
 	assert.Equal(t, byte(0), z.Peek(0), "first character must yield error")
 	assert.Equal(t, io.EOF, z.Err(), "error must be EOF")
 }
