@@ -19,7 +19,7 @@ type bufferPool struct {
 func (z *bufferPool) swap(oldBuf []byte, size int) []byte {
 	// find new buffer that can be reused
 	swap := -1
-	for i := range z.pool {
+	for i := 0; i < len(z.pool); i++ {
 		if !z.pool[i].active && size <= cap(z.pool[i].buf) {
 			swap = i
 			break
