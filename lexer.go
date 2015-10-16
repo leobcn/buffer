@@ -129,7 +129,7 @@ func (z *Lexer) read(pos int) byte {
 	pos -= z.start
 	z.pos -= z.start
 	z.start, z.buf = 0, buf[:d+n]
-	if n == 0 {
+	if pos >= d+n {
 		if z.err == nil {
 			z.err = io.EOF
 		}

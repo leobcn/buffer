@@ -69,6 +69,7 @@ func TestLexer(t *testing.T) {
 	assert.Equal(t, byte('i'), z.Peek(0), "must be 'i' at position 0 after shifting")
 	assert.Equal(t, byte('p'), z.Peek(1), "must be 'p' at position 1 after shifting")
 	assert.Nil(t, z.Err(), "error must be nil at this point")
+	assert.Equal(t, len("Lorem "), z.ShiftLen(), "shifted length must equal last shift")
 
 	z.Move(len(s) - len("Lorem ") - 1)
 	assert.Nil(t, z.Err(), "error must be nil just before the end of the buffer")
@@ -91,6 +92,9 @@ func TestLexerSmall(t *testing.T) {
 
 	z = NewLexerSize(test.NewPlainReader(bytes.NewBufferString(s)), 0)
 	assert.Equal(t, "e", string(z.Peek(4)), "first character must be '4' at position 4")
+
+	z = NewLexerSize(test.NewPlainReader(bytes.NewBufferString(s)), 13)
+	assert.Equal(t, byte(0), z.Peek(13), "thirteenth character must yield error")
 }
 
 func TestLexerRunes(t *testing.T) {
@@ -118,4 +122,5 @@ func TestLexerEmptyReader(t *testing.T) {
 	z := NewLexer(test.NewEmptyReader())
 	assert.Equal(t, byte(0), z.Peek(0), "first character must yield error")
 	assert.Equal(t, io.EOF, z.Err(), "error must be EOF")
+	assert.Equal(t, byte(0), z.Peek(0), "second peek must also yield error")
 }
