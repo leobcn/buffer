@@ -10,9 +10,12 @@ import (
 func TestWriter(t *testing.T) {
 	w := NewWriter(make([]byte, 0, 3))
 
+	assert.Equal(t, 0, w.Len(), "buffer must initially have zero length")
+
 	n, _ := w.Write([]byte("abc"))
 	assert.Equal(t, 3, n, "first write must write 3 characters")
 	assert.Equal(t, []byte("abc"), w.Bytes(), "first write must match 'abc'")
+	assert.Equal(t, 3, w.Len(), "buffer must have length 3 after first write")
 
 	n, _ = w.Write([]byte("def"))
 	assert.Equal(t, 3, n, "second write must write 3 characters")

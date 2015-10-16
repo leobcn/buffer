@@ -70,6 +70,12 @@ func TestShifterZeroLen(t *testing.T) {
 	assert.Equal(t, byte(0), z.Peek(0), "first character must yield error")
 }
 
+func TestShifterEmptyReader(t *testing.T) {
+	var z = NewShifter(test.NewEmptyReader())
+	assert.Equal(t, byte(0), z.Peek(0), "first character must yield error")
+	assert.Equal(t, true, z.IsEOF(), "empty reader must return EOF")
+}
+
 ////////////////////////////////////////////////////////////////
 
 func ExampleNewShifter() {
