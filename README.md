@@ -36,7 +36,7 @@ When the internal `io.Reader` returned an error, `Err() error` will return that 
 ## Lexer
 Lexer is an improvement over Shifter in that it does not need the returned byte slices to be copied. Instead you can call `ShiftLen() int`, which returns the number of bytes that have been shifted since the previous call to `ShiftLen`, and use that to specify how many bytes need to be freed up from the buffer. Calling `Free(n int)` frees up `n` bytes from the internal buffer(s). It holds an array of buffers to accomodate for keeping everything in-memory. If you don't need to keep returned byte slices around, call `Free(ShiftLen())` after every `Shift` call.
 
-The `MoveTo(int)` function has been renamed to `Rewind(int)` to fit its meaning better.
+The `MoveTo(int)` function has been renamed to `Rewind(int)` to fit its meaning better. Also `Bytes() []byte` has been renamed to `Lexeme() []byte` for the same reason.
 
 ## License
 Released under the [MIT license](LICENSE.md).
