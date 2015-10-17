@@ -65,11 +65,11 @@ func TestLexer(t *testing.T) {
 
 	assert.Equal(t, []byte("Lorem "), z.Lexeme(), "buffered string must now read 'Lorem ' when at position 6")
 	assert.Equal(t, []byte("Lorem "), z.Shift(), "shift must return the buffered string")
+	assert.Equal(t, len("Lorem "), z.ShiftLen(), "shifted length must equal last shift")
 	assert.Equal(t, 0, z.Pos(), "after shifting position must be 0")
 	assert.Equal(t, byte('i'), z.Peek(0), "must be 'i' at position 0 after shifting")
 	assert.Equal(t, byte('p'), z.Peek(1), "must be 'p' at position 1 after shifting")
 	assert.Nil(t, z.Err(), "error must be nil at this point")
-	assert.Equal(t, len("Lorem "), z.ShiftLen(), "shifted length must equal last shift")
 
 	z.Move(len(s) - len("Lorem ") - 1)
 	assert.Nil(t, z.Err(), "error must be nil just before the end of the buffer")
@@ -80,6 +80,16 @@ func TestLexer(t *testing.T) {
 	z.Move(-1)
 	assert.Nil(t, z.Err(), "error must be nil just before the end of the buffer, even when it has been past the buffer")
 	z.Free(0) // has already been tested
+}
+
+func TestLexerShift(t *testing.T) {
+	s := `Lorem ipsum dolor sit amet, consectetur adipiscing elit.`
+	z := NewLexerSize(test.NewPlainReader(bytes.NewBufferString(s)), 5)
+
+	z.Move(len("Lorem "))
+	assert.Equal(t, []byte("Lorem "), z.Shift(), "shift must return the buffered string")
+	assert.Equal(t, len("Lorem "), z.ShiftLen(), "shifted length must equal last shift")
+
 }
 
 func TestLexerSmall(t *testing.T) {

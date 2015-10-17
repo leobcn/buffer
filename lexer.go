@@ -196,8 +196,17 @@ func (z *Lexer) Lexeme() []byte {
 	return z.buf[z.start:z.pos]
 }
 
+// Skip collapses the position to the end of the selection.
+func (z *Lexer) Skip() {
+	z.start = z.pos
+}
+
 // Shift returns the bytes of the current selection and collapses the position to the end of the selection.
+// It also returns the number of bytes we moved since the last call to Shift. This can be used in calls to Free.
 func (z *Lexer) Shift() []byte {
+	if z.pos > len(z.buf) { // make sure we peeked at least as much as we shift
+		z.read(z.pos - 1)
+	}
 	b := z.buf[z.start:z.pos]
 	z.start = z.pos
 	return b
@@ -208,9 +217,4 @@ func (z *Lexer) ShiftLen() int {
 	n := z.start - z.prevStart
 	z.prevStart = z.start
 	return n
-}
-
-// Skip collapses the position to the end of the selection.
-func (z *Lexer) Skip() {
-	z.start = z.pos
 }
