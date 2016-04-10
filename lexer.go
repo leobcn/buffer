@@ -154,9 +154,10 @@ func (z *Lexer) Free(n int) {
 
 // Peek returns the ith byte relative to the end position and possibly does an allocation.
 // Peek returns zero when an error has occurred, Err returns the error.
+// TODO: inline function
 func (z *Lexer) Peek(pos int) byte {
 	pos += z.pos
-	if uint(pos) < uint(len(z.buf)) {
+	if uint(pos) < uint(len(z.buf)) { // uint for BCE
 		return z.buf[pos]
 	}
 	return z.read(pos)
