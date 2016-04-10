@@ -156,10 +156,10 @@ func (z *Lexer) Free(n int) {
 // Peek returns zero when an error has occurred, Err returns the error.
 func (z *Lexer) Peek(pos int) byte {
 	pos += z.pos
-	if pos >= len(z.buf) {
-		return z.read(pos)
+	if uint(pos) < uint(len(z.buf)) {
+		return z.buf[pos]
 	}
-	return z.buf[pos]
+	return z.read(pos)
 }
 
 // PeekRune returns the rune and rune length of the ith byte relative to the end position.
