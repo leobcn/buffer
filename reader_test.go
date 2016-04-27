@@ -32,6 +32,12 @@ func TestReader(t *testing.T) {
 	n, err = r.Read(nil)
 	test.Error(t, err, nil, "error must be nil")
 	test.That(t, n == 0, "read to nil buffer must return 0 characters read")
+
+	r.Reset()
+	n, err = r.Read(buf)
+	test.Error(t, err, nil, "error must be nil")
+	test.That(t, n == 3, "read after reset must read 3 characters")
+	test.Bytes(t, buf, []byte("abc"), "read after reset must match 'abc'")
 }
 
 func ExampleNewReader() {
