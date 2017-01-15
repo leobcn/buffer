@@ -102,7 +102,14 @@ func TestLexerSmall(t *testing.T) {
 	test.That(t, z.Peek(4) == 'e', "first character must be 'e' at position 4")
 
 	z = NewLexerSize(test.NewPlainReader(bytes.NewBufferString(s)), 13)
-	test.That(t, z.Peek(13) == 0, "thirteenth character must yield error")
+	test.That(t, z.Peek(13) == 0, "must yield error at position 13")
+}
+
+func TestLexerSingle(t *testing.T) {
+	z := NewLexer(test.NewInfiniteReader())
+	test.That(t, z.Peek(0) == '.')
+	test.That(t, z.Peek(1) == '.')
+	test.That(t, z.Peek(3) == '.', "required two successful reads")
 }
 
 func TestLexerRunes(t *testing.T) {
