@@ -12,6 +12,8 @@ type MemLexer struct {
 	pos       int // index in buf
 	start     int // index in buf
 	prevStart int
+
+	restoreEOF func()
 }
 
 // NewMemLexer returns a new MemLexer for a given io.Reader with a 4kB estimated buffer size.
@@ -31,18 +33,45 @@ func NewMemLexer(r io.Reader) *MemLexer {
 		}
 	}
 
+	if len(b) == 0 {
+		return &MemLexer{
+			buf: []byte{0},
+			pos: 0,
+		}
+	}
+
 	// append NULL to buffer if it isn't already there
-	if len(b) > 0 && b[len(b)-1] != 0 {
-		b = append(b, 0)
+	restoreEOF := func() {}
+	if b[len(b)-1] != 0 {
+		if cap(b) > len(b) {
+			n := len(b)
+			b = b[:n+1]
+			c := b[n]
+			b[n] = 0
+			restoreEOF = func() {
+				b[n] = c
+			}
+		} else {
+			b = append(b, 0)
+		}
 	}
 	return &MemLexer{
-		buf: b,
+		buf:        b,
+		restoreEOF: restoreEOF,
+	}
+}
+
+func (z *MemLexer) Restore() {
+	if z.restoreEOF != nil {
+		z.restoreEOF()
+		z.restoreEOF = nil
 	}
 }
 
 // Err returns the error returned from io.Reader. It may still return valid bytes for a while though.
 func (z *MemLexer) Err() error {
 	if z.pos >= len(z.buf)-1 {
+		z.Restore()
 		return io.EOF
 	}
 	return nil
@@ -84,6 +113,14 @@ func (z *MemLexer) Pos() int {
 	return z.pos - z.start
 }
 
+func (z *MemLexer) AbsPos() int {
+	return z.pos
+}
+
+func (z *MemLexer) String() string {
+	return string(z.buf)
+}
+
 // Rewind rewinds the position to the given position.
 func (z *MemLexer) Rewind(pos int) {
 	z.pos = z.start + pos
@@ -105,4 +142,11 @@ func (z *MemLexer) Shift() []byte {
 	b := z.buf[z.start:z.pos]
 	z.start = z.pos
 	return b
+}
+
+// ShiftLen returns the number of bytes moved since the last call to ShiftLen. This can be used in calls to Free because it takes into account multiple Shifts or Skips.
+func (z *MemLexer) ShiftLen() int {
+	n := z.start - z.prevStart
+	z.prevStart = z.start
+	return n
 }
