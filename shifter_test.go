@@ -14,7 +14,7 @@ func TestShifter(t *testing.T) {
 	var z = NewShifter(bytes.NewBufferString(s))
 
 	test.That(t, z.IsEOF(), "buffer must be fully in memory")
-	test.Error(t, z.Err(), nil, "buffer is at EOF but must not return EOF until we reach that")
+	test.T(t, z.Err(), nil, "buffer is at EOF but must not return EOF until we reach that")
 	test.That(t, z.Pos() == 0, "buffer must start at position 0")
 	test.That(t, z.Peek(0) == 'L', "first character must be 'L'")
 	test.That(t, z.Peek(1) == 'o', "second character must be 'o'")
@@ -31,16 +31,16 @@ func TestShifter(t *testing.T) {
 	test.That(t, z.Pos() == 0, "after shifting position must be 0")
 	test.That(t, z.Peek(0) == 'i', "must be 'i' at position 0 after shifting")
 	test.That(t, z.Peek(1) == 'p', "must be 'p' at position 1 after shifting")
-	test.Error(t, z.Err(), nil, "error must be nil at this point")
+	test.T(t, z.Err(), nil, "error must be nil at this point")
 
 	z.Move(len(s) - len("Lorem ") - 1)
-	test.Error(t, z.Err(), nil, "error must be nil just before the end of the buffer")
+	test.T(t, z.Err(), nil, "error must be nil just before the end of the buffer")
 	z.Skip()
 	test.That(t, z.Pos() == 0, "after skipping position must be 0")
 	z.Move(1)
-	test.Error(t, z.Err(), io.EOF, "error must be EOF when past the buffer")
+	test.T(t, z.Err(), io.EOF, "error must be EOF when past the buffer")
 	z.Move(-1)
-	test.Error(t, z.Err(), nil, "error must be nil just before the end of the buffer, even when it has been past the buffer")
+	test.T(t, z.Err(), nil, "error must be nil just before the end of the buffer, even when it has been past the buffer")
 }
 
 func TestShifterSmall(t *testing.T) {
