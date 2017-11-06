@@ -2,7 +2,6 @@ package buffer // import "github.com/tdewolff/buffer"
 
 import (
 	"io"
-	"io/ioutil"
 )
 
 var nullBuffer = []byte{0}
@@ -19,22 +18,7 @@ type MemLexer struct {
 
 // NewMemLexer returns a new MemLexer for a given io.Reader with a 4kB estimated buffer size.
 // If the io.Reader implements Bytes, that buffer is used instead.
-func NewMemLexer(r io.Reader) *MemLexer {
-	var b []byte
-
-	// TODO: remove by accepting []byte instead of io.Reader
-	// if reader has the bytes in memory already, use that instead
-	if buffer, ok := r.(interface {
-		Bytes() []byte
-	}); ok {
-		b = buffer.Bytes()
-	} else {
-		var err error
-		b, err = ioutil.ReadAll(r)
-		if err != nil {
-		}
-	}
-
+func NewMemLexer(b []byte) *MemLexer {
 	z := &MemLexer{
 		buf: b,
 	}
