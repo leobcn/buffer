@@ -5,15 +5,16 @@ import (
 	"io/ioutil"
 )
 
+var nullBuffer = []byte{0}
+
 // MemLexer is a buffered reader that allows peeking forward and shifting, taking an io.Reader.
 // It keeps data in-memory until Free, taking a byte length, is called to move beyond the data.
 type MemLexer struct {
-	buf       []byte
-	pos       int // index in buf
-	start     int // index in buf
-	prevStart int
+	buf   []byte
+	pos   int // index in buf
+	start int // index in buf
 
-	restoreEOF func()
+	restore func()
 }
 
 // NewMemLexer returns a new MemLexer for a given io.Reader with a 4kB estimated buffer size.
@@ -21,6 +22,7 @@ type MemLexer struct {
 func NewMemLexer(r io.Reader) *MemLexer {
 	var b []byte
 
+	// TODO: remove by accepting []byte instead of io.Reader
 	// if reader has the bytes in memory already, use that instead
 	if buffer, ok := r.(interface {
 		Bytes() []byte
@@ -33,38 +35,36 @@ func NewMemLexer(r io.Reader) *MemLexer {
 		}
 	}
 
-	if len(b) == 0 {
-		return &MemLexer{
-			buf: []byte{0},
-			pos: 0,
-		}
+	z := &MemLexer{
+		buf: b,
 	}
 
-	// append NULL to buffer if it isn't already there
-	restoreEOF := func() {}
-	if b[len(b)-1] != 0 {
-		if cap(b) > len(b) {
-			n := len(b)
+	n := len(b)
+	if n == 0 {
+		z.buf = nullBuffer
+	} else if b[n-1] != 0 {
+		// Append NULL to buffer, but try to avoid reallocation
+		if cap(b) > n {
+			// Overwrite next byte but restore when done
 			b = b[:n+1]
 			c := b[n]
 			b[n] = 0
-			restoreEOF = func() {
+
+			z.buf = b
+			z.restore = func() {
 				b[n] = c
 			}
 		} else {
-			b = append(b, 0)
+			z.buf = append(b, 0)
 		}
 	}
-	return &MemLexer{
-		buf:        b,
-		restoreEOF: restoreEOF,
-	}
+	return z
 }
 
 func (z *MemLexer) Restore() {
-	if z.restoreEOF != nil {
-		z.restoreEOF()
-		z.restoreEOF = nil
+	if z.restore != nil {
+		z.restore()
+		z.restore = nil
 	}
 }
 
@@ -75,11 +75,6 @@ func (z *MemLexer) Err() error {
 		return io.EOF
 	}
 	return nil
-}
-
-// Free frees up bytes of length n from previously shifted tokens.
-// Each call to Shift should at one point be followed by a call to Free with a length returned by ShiftLen.
-func (z *MemLexer) Free(n int) {
 }
 
 // Peek returns the ith byte relative to the end position and possibly does an allocation.
@@ -113,14 +108,6 @@ func (z *MemLexer) Pos() int {
 	return z.pos - z.start
 }
 
-func (z *MemLexer) AbsPos() int {
-	return z.pos
-}
-
-func (z *MemLexer) String() string {
-	return string(z.buf)
-}
-
 // Rewind rewinds the position to the given position.
 func (z *MemLexer) Rewind(pos int) {
 	z.pos = z.start + pos
@@ -142,11 +129,4 @@ func (z *MemLexer) Shift() []byte {
 	b := z.buf[z.start:z.pos]
 	z.start = z.pos
 	return b
-}
-
-// ShiftLen returns the number of bytes moved since the last call to ShiftLen. This can be used in calls to Free because it takes into account multiple Shifts or Skips.
-func (z *MemLexer) ShiftLen() int {
-	n := z.start - z.prevStart
-	z.prevStart = z.start
-	return n
 }
