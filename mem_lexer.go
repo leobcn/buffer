@@ -2,6 +2,7 @@ package buffer // import "github.com/tdewolff/buffer"
 
 import (
 	"io"
+	"io/ioutil"
 )
 
 var nullBuffer = []byte{0}
@@ -12,13 +13,35 @@ type MemLexer struct {
 	buf   []byte
 	pos   int // index in buf
 	start int // index in buf
+	err   error
 
 	restore func()
 }
 
+func NewMemLexer(r io.Reader) *MemLexer {
+	var b []byte
+	if r != nil {
+		if buffer, ok := r.(interface {
+			Bytes() []byte
+		}); ok {
+			b = buffer.Bytes()
+		} else {
+			var err error
+			// TODO: ReadALL + 1 byte, so reallocation for appending NULL is not needed
+			b, err = ioutil.ReadAll(r)
+			if err != nil {
+				return &MemLexer{
+					err: err,
+				}
+			}
+		}
+	}
+	return NewMemLexerBytes(b)
+}
+
 // NewMemLexer returns a new MemLexer for a given io.Reader with a 4kB estimated buffer size.
 // If the io.Reader implements Bytes, that buffer is used instead.
-func NewMemLexer(b []byte) *MemLexer {
+func NewMemLexerBytes(b []byte) *MemLexer {
 	z := &MemLexer{
 		buf: b,
 	}
@@ -54,7 +77,9 @@ func (z *MemLexer) Restore() {
 
 // Err returns the error returned from io.Reader. It may still return valid bytes for a while though.
 func (z *MemLexer) Err() error {
-	if z.pos >= len(z.buf)-1 {
+	if z.err != nil {
+		return z.err
+	} else if z.pos >= len(z.buf)-1 {
 		z.Restore()
 		return io.EOF
 	}
