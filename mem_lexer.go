@@ -31,6 +31,7 @@ func NewMemLexer(r io.Reader) *MemLexer {
 			b, err = ioutil.ReadAll(r)
 			if err != nil {
 				return &MemLexer{
+					buf: []byte{0},
 					err: err,
 				}
 			}
